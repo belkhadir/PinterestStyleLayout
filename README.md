@@ -8,7 +8,6 @@ This repository accompanies a blog series on building adaptive layouts using the
 ## 📸 Preview
 
 ![Pinterest Layout Demo](preview.gif)  
-*(Add your GIF or screenshot here — replace `preview.gif` with your image filename)*
 
 ---
 
