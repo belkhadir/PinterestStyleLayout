@@ -42,21 +42,21 @@ struct PinterestLayout: Layout {
     func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
         let safeProposalWidth = proposal.replacingUnspecifiedDimensions().width
         let cardWidth = (safeProposalWidth - itemSpacing) / CGFloat(numberOfColumns)
-        var columnHeights: [CGFloat] = .init(repeating: bounds.minY + itemSpacing, count: numberOfColumns)
+        var yOffset = [CGFloat](repeating: bounds.minY + itemSpacing, count: numberOfColumns)
         
         for (index, subView) in subviews.enumerated() {
             let columnIndex = index % numberOfColumns
             let x = bounds.minX + (cardWidth + itemSpacing) * CGFloat(columnIndex)
             
             let height = subView.sizeThatFits(.init(width: cardWidth, height: nil)).height
-            let y = columnHeights[columnIndex]
+            let y = yOffset[columnIndex]
             
             subView.place(
                 at: CGPoint(x: x, y: y),
                 proposal: ProposedViewSize(width: cardWidth, height: height)
             )
             
-            columnHeights[columnIndex] += height + itemSpacing
+            yOffset[columnIndex] += height + itemSpacing
         }
     }
 }
