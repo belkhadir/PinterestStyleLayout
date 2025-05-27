@@ -9,99 +9,54 @@ import SwiftUI
 
 struct PinterestLayout: Layout {
     
-    private static let numberOfColumns: Int = 2
+    private let numberOfColumns: Int
     private let itemSpacing: CGFloat
     
-    init(itemSpacing: CGFloat = 12) {
+    init(numberOfColumns: Int = 2, itemSpacing: CGFloat = 12) {
+        self.numberOfColumns = numberOfColumns
         self.itemSpacing = itemSpacing
     }
     
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
         let safeProposalWidth = proposal.replacingUnspecifiedDimensions().width
-        let cardWidth = (safeProposalWidth - itemSpacing) / CGFloat(Self.numberOfColumns)
-
-        var leftSizeColumns: [CGFloat] = []
-        var righSizeColumns: [CGFloat] = []
-                
+        let cardWidth = (safeProposalWidth - itemSpacing) / CGFloat(numberOfColumns)
+        var columnHeights = [CGFloat](repeating: 0.0, count: numberOfColumns)
+        
         for (index, subView) in subviews.enumerated() {
             let height = subView.sizeThatFits(.init(width: cardWidth, height: nil)).height
-            if isNewLine(index: index) {
-                righSizeColumns.append(height)
-            } else {
-                leftSizeColumns.append(height)
+            let columnIndex = index % numberOfColumns
+           
+            if columnHeights[columnIndex] > 0 {
+                columnHeights[columnIndex] += itemSpacing
             }
+
+            columnHeights[columnIndex] += height
         }
-        
-        let totalHeight = max(
-            totalHeight(for: leftSizeColumns),
-            totalHeight(for: righSizeColumns)
-        )
-        
+
         return CGSize(
-            width: cardWidth * CGFloat(Self.numberOfColumns) + itemSpacing,
-            height: totalHeight + itemSpacing
+            width: cardWidth * CGFloat(numberOfColumns) + itemSpacing,
+            height: columnHeights.max() ?? .zero // 8
         )
     }
-    
     
     func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
         let safeProposalWidth = proposal.replacingUnspecifiedDimensions().width
-        let cardWidth = (safeProposalWidth - itemSpacing) / CGFloat(Self.numberOfColumns)
-        
-        var leftSizeColumns: [LayoutSubviews.Element] = []
-        var righSizeColumns: [LayoutSubviews.Element] = []
+        let cardWidth = (safeProposalWidth - itemSpacing) / CGFloat(numberOfColumns)
+        var columnHeights: [CGFloat] = .init(repeating: bounds.minY + itemSpacing, count: numberOfColumns)
         
         for (index, subView) in subviews.enumerated() {
-            if isNewLine(index: index) {
-                righSizeColumns.append(subView)
-            } else {
-                leftSizeColumns.append(subView)
-            }
-        }
-        
-        var x = bounds.minX
-        var y = bounds.minY + itemSpacing
-        
-        for leftSizeColumn in leftSizeColumns {
-            let height = leftSizeColumn.sizeThatFits(.init(width: cardWidth, height: nil)).height
-            leftSizeColumn.place(
+            let columnIndex = index % numberOfColumns
+            let x = bounds.minX + (cardWidth + itemSpacing) * CGFloat(columnIndex)
+            
+            let height = subView.sizeThatFits(.init(width: cardWidth, height: nil)).height
+            let y = columnHeights[columnIndex]
+            
+            subView.place(
                 at: CGPoint(x: x, y: y),
-                proposal: ProposedViewSize(
-                    width: cardWidth,
-                    height: height
-                )
+                proposal: ProposedViewSize(width: cardWidth, height: height)
             )
             
-            y += itemSpacing + height
-        }
-        
-        x = cardWidth + bounds.minX + itemSpacing
-        y = bounds.minY + itemSpacing
-        
-        for righSizeColumn in righSizeColumns {
-            let height = righSizeColumn.sizeThatFits(.init(width: cardWidth, height: nil)).height
-            righSizeColumn.place(
-                at: CGPoint(x: x, y: y),
-                proposal: ProposedViewSize(
-                    width: cardWidth,
-                    height: height
-                )
-            )
-            
-            y += itemSpacing + height
+            columnHeights[columnIndex] += height + itemSpacing
         }
     }
 }
-
-// MARK: - Helpers
-private extension PinterestLayout {
-    func isNewLine(index: Int) -> Bool {
-        (index % Self.numberOfColumns) == (Self.numberOfColumns - 1)
-    }
-    
-    func totalHeight(for heights: [CGFloat]) -> CGFloat {
-        guard !heights.isEmpty else { return 0 }
-        return heights.reduce(0, +) + itemSpacing * CGFloat(heights.count - 1)
-    }
-}
-
