@@ -22,9 +22,9 @@ struct PinterestLayout: Layout {
         let cardWidth = (safeProposalWidth - itemSpacing) / CGFloat(numberOfColumns)
         var columnHeights = [CGFloat](repeating: 0.0, count: numberOfColumns)
         
-        for (index, subView) in subviews.enumerated() {
+        for subView in subviews {
             let height = subView.sizeThatFits(.init(width: cardWidth, height: nil)).height
-            let columnIndex = index % numberOfColumns
+            let columnIndex = columnHeights.enumerated().min(by: { $0.element < $1.element })!.offset
            
             if columnHeights[columnIndex] > 0 {
                 columnHeights[columnIndex] += itemSpacing
@@ -35,17 +35,17 @@ struct PinterestLayout: Layout {
 
         return CGSize(
             width: cardWidth * CGFloat(numberOfColumns) + itemSpacing,
-            height: columnHeights.max() ?? .zero // 8
+            height: columnHeights.max() ?? .zero
         )
     }
     
     func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
         let safeProposalWidth = proposal.replacingUnspecifiedDimensions().width
         let cardWidth = (safeProposalWidth - itemSpacing) / CGFloat(numberOfColumns)
-        var yOffset = [CGFloat](repeating: bounds.minY + itemSpacing, count: numberOfColumns)
+        var yOffset = [CGFloat](repeating: bounds.minY, count: numberOfColumns)
         
-        for (index, subView) in subviews.enumerated() {
-            let columnIndex = index % numberOfColumns
+        for subView in subviews {
+            let columnIndex = yOffset.enumerated().min(by: { $0.element < $1.element })!.offset
             let x = bounds.minX + (cardWidth + itemSpacing) * CGFloat(columnIndex)
             
             let height = subView.sizeThatFits(.init(width: cardWidth, height: nil)).height
